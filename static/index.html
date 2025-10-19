@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Intelligence Platform</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- removed three.js for minimal UI -->
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0b0d12;
+            color: #e5e7eb;
+            overflow-x: hidden;
+        }
+        
+        /* Minimal layout */
+        .content {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 20px;
+        }
+        
+        .hero {
+            text-align: left;
+            margin-bottom: 24px;
+        }
+        
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #e5e7eb;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+        }
+        
+        .hero p {
+            font-size: 0.95rem;
+            color: #9aa4b2;
+            font-weight: 400;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(160px, 1fr));
+            gap: 12px;
+            margin: 24px 0 16px;
+        }
+        
+        .stat-card {
+            background: #0f141b;
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: left;
+        }
+        
+        .stat-card h3 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #e5e7eb;
+            margin-bottom: 2px;
+        }
+        
+        .stat-card p {
+            color: #9aa4b2;
+            font-size: 0.75rem;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 8px 0 16px;
+        }
+        
+        .glass-card {
+            background: #0f141b;
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+            padding: 16px;
+        }
+        
+        .glass-card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: #e5e7eb;
+        }
+        
+        .input-group { margin-bottom: 16px; }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #9aa4b2;
+            font-size: 0.8rem;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            background: #0b0f15;
+            border: 1px solid #1f2937;
+            color: #e5e7eb;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #334155;
+            background: #0b0f15;
+        }
+        
+        .btn {
+            background: #111827;
+            color: #e5e7eb;
+            border: 1px solid #1f2937;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        .btn:hover { background: #0f172a; }
+        .btn-secondary { background: #0f172a; }
+        .btn-success { background: #0a1a12; border-color: #163a2a; }
+        
+        .appliances {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .appliance {
+            background: #0b0f15;
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: left;
+        }
+        .appliance.on { border-color: #134e4a; }
+        .appliance h3 { font-size: 0.95rem; margin-bottom: 6px; }
+        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+        .status-dot.on { background: #10b981; }
+        .status-dot.off { background: #ef4444; }
+        
+        #power-chart {
+            background: #0f141b;
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+            padding: 8px;
+            height: 360px;
+        }
+        
+        .msg {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            background: #0f141b;
+            border: 1px solid #1f2937;
+            padding: 10px 12px;
+            border-radius: 8px;
+            z-index: 1000;
+        }
+        .msg.success { border-color: #134e4a; }
+        .msg.error { border-color: #7f1d1d; }
+        
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- removed background canvas for minimal look -->
+    
+    <div class="content">
+        <div class="hero">
+            <h1>Solar Intelligence</h1>
+            <p>Energy forecasting and control</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3 id="total-power">0</h3>
+                <p>Total Power (kWh)</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="peak-power">0</h3>
+                <p>Peak Power (kW)</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="total-consumption">0</h3>
+                <p>Consumption (kW)</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="remaining-power">0</h3>
+                <p>Remaining (kW)</p>
+            </div>
+        </div>
+        
+        <div class="grid">
+            <div class="glass-card">
+                <h2>Power Prediction</h2>
+                <div class="input-group">
+                    <label>Date</label>
+                    <input type="date" id="prediction-date">
+                </div>
+                <div class="input-group">
+                    <label>Temperature (°C)</label>
+                    <input type="number" id="temperature" value="25">
+                </div>
+                <div class="input-group">
+                    <label>Irradiance (W/m²)</label>
+                    <input type="number" id="irradiance" value="500">
+                </div>
+                <div class="input-group">
+                    <label>Direct Irradiance (W/m²)</label>
+                    <input type="number" id="direct-irradiance" value="400">
+                </div>
+                <div class="input-group">
+                    <label>Diffuse Irradiance (W/m²)</label>
+                    <input type="number" id="diffuse-irradiance" value="100">
+                </div>
+                <button class="btn" onclick="predictPower()">Predict Power</button>
+                <button class="btn btn-secondary" onclick="predictDaily()">Predict Full Day</button>
+                <button class="btn btn-success" onclick="trainModel()">Train Model</button>
+            </div>
+            
+            <div class="glass-card">
+                <h2>Smart Control</h2>
+                <div class="input-group">
+                    <label>Available Power (kW)</label>
+                    <input type="number" id="available-power" value="5">
+                </div>
+                <button class="btn" onclick="loadAppliances()">Load</button>
+                <button class="btn btn-success" onclick="optimizeEnergy()">Optimize</button>
+                
+                <div id="appliances-container" class="appliances"></div>
+            </div>
+        </div>
+        
+        <div id="power-chart"></div>
+    </div>
+    
+    <div id="messages"></div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        // Simple app state for coherent stats
+        const appState = {
+            lastPredictedPower: 0,    // kW (instant)
+            lastTotalDaily: 0,        // kWh
+            lastPeakPower: 0,         // kW
+            totalConsumption: 0,      // kW
+        };
+        
+        document.getElementById('prediction-date').value = new Date().toISOString().split('T')[0];
+        
+        async function api(endpoint, method = 'GET', data = null) {
+            try {
+                const config = { method, url: API_BASE + endpoint };
+                if (data !== null) config.data = data;
+                const response = await axios(config);
+                return response.data;
+            } catch (error) {
+                msg('API Error: ' + (error.response?.data?.detail || error.message), 'error');
+                throw error;
+            }
+        }
+        
+        async function predictPower() {
+            const weatherData = {
+                hour: new Date().getHours(),
+                temperature: parseFloat(document.getElementById('temperature').value),
+                global_irradiance: parseFloat(document.getElementById('irradiance').value),
+                month: new Date().getMonth() + 1
+            };
+            
+            const result = await api('/predict/power', 'POST', weatherData);
+            appState.lastPredictedPower = result.predicted_power || 0;
+            msg(`Predicted power: ${appState.lastPredictedPower.toFixed(2)} kW`, 'success');
+            updateStats({ 
+                totalPower: appState.lastTotalDaily, 
+                peakPower: appState.lastPeakPower,
+                totalConsumption: appState.totalConsumption,
+                remainingPower: Math.max(0, appState.lastPredictedPower - appState.totalConsumption)
+            });
+        }
+        
+        async function predictDaily() {
+            const date = document.getElementById('prediction-date').value;
+            const temp = parseFloat(document.getElementById('temperature').value);
+            const ghi = parseFloat(document.getElementById('irradiance').value);
+            const params = new URLSearchParams();
+            if (date) params.set('target_date', date);
+            if (!Number.isNaN(temp)) params.set('temperature', String(temp));
+            if (!Number.isNaN(ghi)) params.set('irradiance', String(ghi));
+            const result = await api(`/predict/daily?${params.toString()}`);
+            appState.lastTotalDaily = result.total_daily_power || 0;
+            appState.lastPeakPower = result.peak_power || 0;
+            msg(`Daily total ${appState.lastTotalDaily.toFixed(1)} kWh · peak ${appState.lastPeakPower.toFixed(1)} kW`, 'success');
+            updateChart(result.forecast.map(f => ({ hour: f.hour, power_kw: f.predicted_power })));
+            updateStats({ 
+                totalPower: appState.lastTotalDaily, 
+                peakPower: appState.lastPeakPower,
+                totalConsumption: appState.totalConsumption,
+                remainingPower: Math.max(0, appState.lastPredictedPower - appState.totalConsumption)
+            });
+        }
+        
+        async function trainModel() {
+            msg('Training model…', 'info');
+            const result = await api('/train-model', 'POST');
+            msg(result.success ? 'Training complete' : 'Training failed', result.success ? 'success' : 'error');
+        }
+        
+        async function loadAppliances() {
+            const state = await api('/digital-twin/appliances');
+            const container = document.getElementById('appliances-container');
+            container.innerHTML = state.appliances.map(a => `
+                <div class="appliance ${a.status}">
+                    <h3>${a.name}</h3>
+                    <div style="display:flex;align-items:center;gap:6px;color:#9aa4b2"><span class="status-dot ${a.status}"></span>${a.status.toUpperCase()} • ${a.consumption.toFixed(1)} kW</div>
+                    ${a.controllable ? `<div style="margin-top:8px"><button class=\"btn\" style=\"font-size:0.85rem;padding:8px 12px\" onclick=\"control('${a.id}','${a.status === 'on' ? 'off' : 'on'}')\">Turn ${a.status === 'on' ? 'off' : 'on'}</button></div>` : ''}
+                </div>
+            `).join('');
+            appState.totalConsumption = state.total_consumption || 0;
+            updateStats({ 
+                totalConsumption: appState.totalConsumption,
+                remainingPower: Math.max(0, appState.lastPredictedPower - appState.totalConsumption)
+            });
+        }
+        
+        async function control(id, action) {
+            await api('/digital-twin/appliances/control', 'POST', { appliance_id: id, action });
+            loadAppliances();
+        }
+        
+        async function optimizeEnergy() {
+            const avail = parseFloat(document.getElementById('available-power').value);
+            await api(`/digital-twin/optimize?power_available=${encodeURIComponent(avail)}`, 'POST');
+            msg('Optimization complete', 'success');
+            loadAppliances();
+        }
+        
+        function updateChart(data) {
+            Plotly.newPlot('power-chart', [{
+                x: data.map(d => d.hour),
+                y: data.map(d => d.power_kw),
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: '#6b7280', width: 2 }
+            }], {
+                paper_bgcolor: '#0f141b',
+                plot_bgcolor: '#0f141b',
+                font: { color: '#e5e7eb' },
+                xaxis: { title: 'Hour', gridcolor: '#1f2937', zeroline: false },
+                yaxis: { title: 'Power (kW)', gridcolor: '#1f2937', zeroline: false },
+                margin: { t: 24, r: 16, b: 36, l: 48 },
+                height: 340
+            }, { responsive: true, displayModeBar: false });
+        }
+        
+        function updateStats(s) {
+            if (s.totalPower !== undefined) document.getElementById('total-power').textContent = s.totalPower.toFixed(1);
+            if (s.peakPower !== undefined) document.getElementById('peak-power').textContent = s.peakPower.toFixed(1);
+            if (s.totalConsumption !== undefined) document.getElementById('total-consumption').textContent = s.totalConsumption.toFixed(1);
+            if (s.remainingPower !== undefined) document.getElementById('remaining-power').textContent = Math.max(0, s.remainingPower).toFixed(1);
+        }
+        
+        function msg(text, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `msg ${type}`;
+            div.textContent = text;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 4000);
+        }
+        
+        // Initialize coherent state
+        (async function init() {
+            try {
+                await Promise.all([loadAppliances(), predictDaily()]);
+            } catch {}
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <title>Solar Power Prediction & Digital Twin</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js?v=1"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .appliances-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .appliance-card {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .appliance-card.on {
+            background: #c6f6d5;
+            border-color: #48bb78;
+        }
+        
+        .appliance-card.off {
+            background: #fed7d7;
+            border-color: #f56565;
+        }
+        
+        .appliance-card h3 {
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+        
+        .appliance-card .status {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .appliance-card .power {
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-indicator.on {
+            background: #48bb78;
+        }
+        
+        .status-indicator.off {
+            background: #f56565;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #4a5568;
+        }
+        
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .success {
+            background: #c6f6d5;
+            color: #22543d;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card p {
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌞 Solar Power Prediction & Digital Twin</h1>
+            <p>AI-powered solar energy forecasting with smart appliance control</p>
+        </div>
+        
+        <!-- Status Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3 id="total-power">0</h3>
+                <p>Total Power (kWh)</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="peak-power">0</h3>
+                <p>Peak Power (kW)</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="total-consumption">0</h3>
+                <p>Consumption (kW)</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="remaining-power">0</h3>
+                <p>Remaining (kW)</p>
+            </div>
+        </div>
+        
+        <!-- Main Dashboard -->
+        <div class="dashboard">
+            <!-- Prediction Controls -->
+            <div class="card">
+                <h2>🔮 Power Prediction</h2>
+                <div class="form-group">
+                    <label for="prediction-date">Prediction Date:</label>
+                    <input type="date" id="prediction-date" value="">
+                </div>
+                <div class="form-group">
+                    <label for="temperature">Temperature (°C):</label>
+                    <input type="number" id="temperature" value="25" step="0.1">
+                </div>
+                <div class="form-group">
+                    <label for="irradiance">Global Irradiance (W/m²):</label>
+                    <input type="number" id="irradiance" value="500" step="10">
+                </div>
+                <div class="form-group">
+                    <label for="direct-irradiance">Direct Irradiance (W/m²):</label>
+                    <input type="number" id="direct-irradiance" value="400" step="10">
+                </div>
+                <div class="form-group">
+                    <label for="diffuse-irradiance">Diffuse Irradiance (W/m²):</label>
+                    <input type="number" id="diffuse-irradiance" value="100" step="10">
+                </div>
+                <button class="btn" onclick="predictPower()">Predict Power</button>
+                <button class="btn btn-secondary" onclick="predictDaily()">Predict Full Day</button>
+                <button class="btn btn-success" onclick="trainModel()">Train Model</button>
+            </div>
+            
+            <!-- Digital Twin Controls -->
+            <div class="card">
+                <h2>🏠 Digital Twin Control</h2>
+                <div class="form-group">
+                    <label for="available-power">Available Power (kW):</label>
+                    <input type="number" id="available-power" value="5" step="0.1">
+                </div>
+                <button class="btn" onclick="loadAppliances()">Load Appliances</button>
+                <button class="btn btn-success" onclick="optimizeEnergy()">Optimize Energy</button>
+                <button class="btn btn-secondary" onclick="refreshStatus()">Refresh Status</button>
+                
+                <div id="appliances-container" class="appliances-grid">
+                    <!-- Appliances will be loaded here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Power Prediction Chart -->
+        <div class="chart-container">
+            <h2>📊 Solar Power Generation Forecast</h2>
+            <div id="power-chart"></div>
+        </div>
+        
+        <!-- Messages -->
+        <div id="messages"></div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set today's date as default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('prediction-date').value = today;
+            
+            // Load initial data
+            loadAppliances();
+            refreshStatus();
+        });
+        
+        // API Functions
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            try {
+                const config = {
+                    method,
+                    url: `${API_BASE}${endpoint}`,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                };
+                
+                if (data) {
+                    config.data = data;
+                }
+                
+                const response = await axios(config);
+                return response.data;
+            } catch (error) {
+                console.error('API Error:', error);
+                showMessage('API Error: ' + (error.response?.data?.detail || error.message), 'error');
+                throw error;
+            }
+        }
+        
+        // Prediction Functions
+        async function predictPower() {
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            const irradiance = parseFloat(document.getElementById('irradiance').value);
+            const directIrradiance = parseFloat(document.getElementById('direct-irradiance').value);
+            const diffuseIrradiance = parseFloat(document.getElementById('diffuse-irradiance').value);
+            
+            const weatherData = {
+                hour: new Date().getHours(),
+                temperature: temperature,
+                global_irradiance: irradiance,
+                direct_irradiance: directIrradiance,
+                diffuse_irradiance: diffuseIrradiance,
+                month: new Date().getMonth() + 1
+            };
+            
+            try {
+                const result = await apiCall('/predict/power', 'POST', weatherData);
+                showMessage(`Predicted Power: ${result.predicted_power.toFixed(2)} kW`, 'success');
+                updateStats({ totalPower: result.predicted_power, peakPower: result.predicted_power });
+            } catch (error) {
+                showMessage('Prediction failed', 'error');
+            }
+        }
+        
+        async function predictDaily() {
+            const date = document.getElementById('prediction-date').value;
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            const irradiance = parseFloat(document.getElementById('irradiance').value);
+            const directIrradiance = parseFloat(document.getElementById('direct-irradiance').value);
+            const diffuseIrradiance = parseFloat(document.getElementById('diffuse-irradiance').value);
+            
+            // Create hourly weather forecast
+            const weatherForecast = [];
+            for (let hour = 0; hour < 24; hour++) {
+                // Simulate varying conditions throughout the day
+                const hourIrradiance = hour >= 6 && hour <= 18 ? 
+                    irradiance * Math.sin(Math.PI * (hour - 6) / 12) : 0;
+                const hourDirect = hourIrradiance * 0.8;
+                const hourDiffuse = hourIrradiance * 0.2;
+                
+                weatherForecast.push({
+                    hour: hour,
+                    temperature: temperature + Math.sin(2 * Math.PI * hour / 24) * 5,
+                    global_irradiance: hourIrradiance,
+                    direct_irradiance: hourDirect,
+                    diffuse_irradiance: hourDiffuse,
+                    month: new Date().getMonth() + 1
+                });
+            }
+            
+            try {
+                // Backend expects GET with optional query param target_date
+                const result = await apiCall(`/predict/daily${date ? `?target_date=${date}` : ''}`, 'GET');
+                
+                showMessage(`Daily Prediction: ${result.total_daily_power.toFixed(2)} kWh total, Peak: ${result.peak_power.toFixed(2)} kW at ${result.peak_hour}:00`, 'success');
+                
+                // Update chart
+                updatePowerChart(result.forecast.map(f => ({ hour: f.hour, power_kw: f.predicted_power })));
+                updateStats({
+                    totalPower: result.total_daily_power,
+                    peakPower: result.peak_power
+                });
+            } catch (error) {
+                showMessage('Daily prediction failed', 'error');
+            }
+        }
+        
+        async function trainModel() {
+            showMessage('Training model...', 'info');
+            try {
+                const result = await apiCall('/train-model', 'POST');
+                if (result && result.success) {
+                    showMessage('Model training completed successfully!', 'success');
+                } else {
+                    showMessage('Model training did not complete successfully', 'error');
+                }
+            } catch (error) {
+                showMessage('Model training failed', 'error');
+            }
+        }
+        
+        // Digital Twin Functions
+        async function loadAppliances() {
+            try {
+                const state = await apiCall('/digital-twin/appliances');
+                displayAppliances(state.appliances);
+                updateStats({
+                    totalConsumption: state.total_consumption,
+                    remainingPower: state.available_power - state.total_consumption
+                });
+            } catch (error) {
+                showMessage('Failed to load appliances', 'error');
+            }
+        }
+        
+        async function controlAppliance(applianceId, action, value = null) {
+            try {
+                const command = {
+                    appliance_id: applianceId,
+                    action: action,
+                    value: value
+                };
+                
+                const result = await apiCall('/digital-twin/appliances/control', 'POST', command);
+                showMessage(result.message, 'success');
+                loadAppliances();
+                refreshStatus();
+            } catch (error) {
+                showMessage('Failed to control appliance', 'error');
+            }
+        }
+        
+        async function optimizeEnergy() {
+            const availablePower = parseFloat(document.getElementById('available-power').value);
+            try {
+                const result = await apiCall('/digital-twin/optimize', 'POST', availablePower);
+                showMessage('Energy optimization completed!', 'success');
+                loadAppliances();
+                refreshStatus();
+            } catch (error) {
+                showMessage('Energy optimization failed', 'error');
+            }
+        }
+        
+        async function refreshStatus() {
+            try {
+                const status = await apiCall('/digital-twin/status');
+                updateStats({
+                    totalConsumption: status.total_consumption,
+                    availablePower: status.available_power,
+                    remainingPower: status.available_power - status.total_consumption
+                });
+            } catch (error) {
+                showMessage('Failed to refresh status', 'error');
+            }
+        }
+        
+        // UI Functions
+        function displayAppliances(appliances) {
+            const container = document.getElementById('appliances-container');
+            container.innerHTML = '';
+            
+            appliances.forEach(appliance => {
+                const card = document.createElement('div');
+                card.className = `appliance-card ${appliance.status}`;
+                
+                const statusClass = appliance.status === 'on' ? 'on' : 'off';
+                const statusText = appliance.status === 'on' ? 'ON' : 'OFF';
+                
+                card.innerHTML = `
+                    <h3>${appliance.name}</h3>
+                    <div class="status">
+                        <span class="status-indicator ${statusClass}"></span>
+                        ${statusText}
+                    </div>
+                    <div class="power">${appliance.consumption.toFixed(1)} kW</div>
+                    <div style="margin-top: 10px;">
+                        ${appliance.controllable ? `
+                            <button class="btn" onclick="controlAppliance('${appliance.id}', '${appliance.status === 'on' ? 'off' : 'on'}')">
+                                ${appliance.status === 'on' ? 'Turn Off' : 'Turn On'}
+                            </button>
+                        ` : '<small>Not Controllable</small>'}
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+        
+        function updatePowerChart(predictions) {
+            const hours = predictions.map(p => p.hour);
+            const power = predictions.map(p => p.power_kw);
+            
+            const trace = {
+                x: hours,
+                y: power,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Solar Power',
+                line: { color: '#f39c12', width: 3 },
+                marker: { size: 6 }
+            };
+            
+            const layout = {
+                title: 'Hourly Solar Power Generation',
+                xaxis: { title: 'Hour of Day' },
+                yaxis: { title: 'Power (kW)' },
+                hovermode: 'closest'
+            };
+            
+            Plotly.newPlot('power-chart', [trace], layout);
+        }
+        
+        function updateStats(stats) {
+            if (stats.totalPower !== undefined) {
+                document.getElementById('total-power').textContent = stats.totalPower.toFixed(1);
+            }
+            if (stats.peakPower !== undefined) {
+                document.getElementById('peak-power').textContent = stats.peakPower.toFixed(1);
+            }
+            if (stats.totalConsumption !== undefined) {
+                document.getElementById('total-consumption').textContent = stats.totalConsumption.toFixed(1);
+            }
+            if (stats.remainingPower !== undefined) {
+                document.getElementById('remaining-power').textContent = Math.max(0, stats.remainingPower).toFixed(1);
+            }
+        }
+        
+        function showMessage(message, type = 'info') {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            messagesDiv.appendChild(messageDiv);
+            
+            // Remove message after 5 seconds
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
