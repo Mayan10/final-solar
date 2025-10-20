@@ -139,9 +139,9 @@ logs/
 tensorboard_logs/
 
 # Data files (uncomment if you want to ignore data files)
-# *.csv
-# *.xlsx
-# *.xls
+*.csv
+*.xlsx
+*.xls
 
 # IDE specific
 .vscode/
