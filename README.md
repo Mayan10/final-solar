@@ -1,8 +1,8 @@
-# 🌞 Solar Power Prediction & Digital Twin System
+# Solar Power Prediction & Digital Twin System
 
 An AI-powered system for predicting solar power generation and controlling smart appliances through a digital twin interface.
 
-## 🚀 Features
+## Features
 
 - **Solar Power Prediction**: XGBoost-based ML model for accurate solar power forecasting
 - **Digital Twin**: Virtual representation of home appliances with smart control
@@ -10,7 +10,7 @@ An AI-powered system for predicting solar power generation and controlling smart
 - **Energy Optimization**: Automatic appliance management based on available solar power
 - **RESTful API**: Complete API for integration with other systems
 
-## 📊 System Architecture
+## System Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -31,7 +31,7 @@ An AI-powered system for predicting solar power generation and controlling smart
 └─────────────────┘    └─────────────────┘
 ```
 
-## 🛠️ Installation
+## Installation
 
 1. **Clone the repository**:
    ```bash
@@ -49,7 +49,7 @@ An AI-powered system for predicting solar power generation and controlling smart
    python run.py
    ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 XGBR_SOLAR/
@@ -64,7 +64,7 @@ XGBR_SOLAR/
 └── models/              # Trained models
 ```
 
-## 🔧 API Endpoints
+## API Endpoints
 
 ### Power Prediction
 - `POST /predict/power` - Predict power for specific conditions
@@ -82,7 +82,7 @@ XGBR_SOLAR/
 - `GET /health` - Health check
 - `GET /docs` - API documentation
 
-## 🎯 Usage Examples
+## Usage Examples
 
 ### 1. Predict Solar Power
 ```python
@@ -131,7 +131,7 @@ daily_data = response.json()
 print(f"Total Power: {daily_data['total_power_kwh']} kWh")
 ```
 
-## 🏠 Digital Twin Appliances
+## Digital Twin Appliances
 
 The system includes these controllable appliances:
 
@@ -145,7 +145,7 @@ The system includes these controllable appliances:
 | LED Lights | 0.1 | Low | Yes |
 | Refrigerator | 0.2 | High | No |
 
-## 📈 Model Performance
+## Model Performance
 
 The XGBoost model uses these features:
 - **Time Features**: Hour, month (cyclical encoding)
@@ -158,7 +158,7 @@ Typical performance metrics:
 - **RMSE**: 50-150 W
 - **MAE**: 30-100 W
 
-## 🔄 Energy Optimization
+## Energy Optimization
 
 The system automatically optimizes energy usage by:
 1. **Priority-based Control**: High-priority appliances get power first
@@ -166,7 +166,7 @@ The system automatically optimizes energy usage by:
 3. **Smart Scheduling**: Turn off non-essential appliances when power is low
 4. **Real-time Monitoring**: Continuous power consumption tracking
 
-## 🌐 Web Interface
+## Web Interface
 
 Access the dashboard at `http://localhost:8000` to:
 - View real-time power predictions
@@ -175,7 +175,7 @@ Access the dashboard at `http://localhost:8000` to:
 - Optimize energy usage
 - View historical data and trends
 
-## 🔧 Configuration
+## Configuration
 
 ### Model Parameters
 ```python
@@ -195,7 +195,7 @@ colsample_bytree=0.8
 # 3 = Low priority (optional)
 ```
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -216,7 +216,7 @@ colsample_bytree=0.8
 - Model logs: `model_analysis.png`
 - Error logs: API response messages
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -224,11 +224,11 @@ colsample_bytree=0.8
 4. Add tests if applicable
 5. Submit a pull request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - PVGIS data from European Union
 - XGBoost library for machine learning
@@ -236,5 +236,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Plotly for visualizations
 
 ---
-
-**🌞 Harness the power of the sun with AI-driven predictions and smart energy management!**
